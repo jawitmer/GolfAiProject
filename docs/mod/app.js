@@ -176,12 +176,31 @@ function renderRound() {
   
   const putts = Object.values(r.holes).reduce((s, h) => s + (h.putts || 0), 0);
   const girCount = Object.values(r.holes).filter(h => h.gir === 1).length;
-  const fwCount = Object.values(r.holes).filter(h => h.tee_result === 'F').length;
+  // Fairways: count drives taken (non-par-3 holes where tee_result is recorded)
+  let driveCount = 0;
+  let fwCount = 0;
+  for (let h = 1; h <= 18; h++) {
+    if (PAR3_HOLES.has(h)) continue;
+    const hd = r.holes[h];
+    if (hd && hd.tee_result) {
+      driveCount++;
+      if (hd.tee_result === 'F') fwCount++;
+    }
+  }
+  // Missed swings = count of shots with quality <= 4
+  let missedSwings = 0;
+  for (const hd of Object.values(r.holes)) {
+    if (!hd.shots) continue;
+    for (const shot of hd.shots) {
+      if (shot.quality && shot.quality <= 4) missedSwings++;
+    }
+  }
   document.getElementById('roundStats').innerHTML = `
     <div class="row"><span class="label">Total strokes</span><span class="val">${totalScore || '—'}</span></div>
     <div class="row"><span class="label">Total putts</span><span class="val">${putts || '—'}</span></div>
     <div class="row"><span class="label">GIR</span><span class="val">${girCount}/${filled || 18}</span></div>
-    <div class="row"><span class="label">Fairways</span><span class="val">${fwCount}/14</span></div>
+    <div class="row"><span class="label">Fairways</span><span class="val">${fwCount}/${driveCount || '—'}</span></div>
+    <div class="row"><span class="label">Missed swings <span style="font-family:var(--mono); font-size:11px; color:var(--ink-dim);">(quality ≤ 4)</span></span><span class="val">${missedSwings}</span></div>
   `;
   
   const completeBtn = document.getElementById('completeBtn');
