@@ -251,6 +251,25 @@ body {
   border-radius: var(--radius);
   margin-top: 10px;
 }
+.secondary-btn.done-state {
+  background: var(--green);
+  color: #F3EFE5;
+  border-color: var(--green);
+}
+.round-item.complete::before {
+  content: '✓';
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  background: var(--green);
+  color: #F3EFE5;
+  border-radius: 50%;
+  font-size: 13px;
+  margin-right: 12px;
+  flex-shrink: 0;
+}
 
 .single-pin-row {
   display: grid;
@@ -647,6 +666,7 @@ body {
   <p class="section-label">Holes</p>
   <div class="holes-grid" id="holesGrid"></div>
   <div class="round-stats" id="roundStats"></div>
+  <button class="secondary-btn" id="completeBtn">Round complete</button>
   <button class="secondary-btn" id="editPinsBtn">Edit pin position</button>
   <button class="export-btn" id="exportBtn">Export CSV…</button>
   <button class="danger-btn" id="deleteRoundBtn">Delete round</button>
