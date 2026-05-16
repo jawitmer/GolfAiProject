@@ -248,6 +248,14 @@ function renderHole() {
   bindChipRow('first_putt_slope', v => v);
   bindChipRow('first_putt_result', v => v);
   
+  // First putt distance
+  const fpd = document.getElementById('firstPuttDist');
+  fpd.value = currentHoleData.first_putt_dist || '';
+  fpd.oninput = () => {
+    const v = parseInt(fpd.value);
+    currentHoleData.first_putt_dist = isNaN(v) ? null : v;
+  };
+  
   // Pelz 3x3 grid
   buildPelzGrid();
   
@@ -454,7 +462,7 @@ function exportCSV() {
   const rows = [];
   // Header
   const baseCols = ['date','notes','hole','par','pin','score','putts','gir','tee_result',
-                    'sector','strokes_from_sector','first_putt_slope','first_putt_result','pelz'];
+                    'sector','strokes_from_sector','first_putt_dist','first_putt_slope','first_putt_result','pelz'];
   // Shot columns: 4 fixed + dynamic. Use up to 6 shot slots (par 5 default 4, plus 2 extras).
   const maxShots = Math.max(6, ...Object.values(r.holes).map(h => (h.shots || []).length));
   const shotCols = [];
@@ -479,6 +487,7 @@ function exportCSV() {
       PAR3_HOLES.has(h) ? '' : (hd.tee_result || ''),
       hd.sector ? 'S' + hd.sector : '',
       hd.strokes_from_sector ?? '',
+      hd.first_putt_dist || '',
       hd.first_putt_slope || '',
       hd.first_putt_result || '',
       hd.pelz ?? '',
@@ -538,6 +547,13 @@ document.getElementById('completeBtn').onclick = () => {
       const probs = [];
       if (!hd.sector) probs.push('sector');
       if (hd.strokes_from_sector === undefined || hd.strokes_from_sector === null) probs.push('strokes from sector');
+      // First-putt fields only matter when there's at least one putt
+      if (hd.putts && hd.putts > 0) {
+        if (!hd.first_putt_dist) probs.push('first putt distance');
+        if (!hd.first_putt_slope) probs.push('first putt slope');
+        if (!hd.first_putt_result) probs.push('first putt result');
+        if (!hd.pelz) probs.push('Pelz');
+      }
       if (probs.length) missing.push(`H${h}: ${probs.join(', ')}`);
     }
     if (missing.length) {
