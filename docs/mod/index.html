@@ -261,6 +261,23 @@ body { padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-are
 }
 .chip-row button.on { background: var(--green); color: #F3EFE5; border-color: var(--green); }
 
+/* Club chips: fixed 8-column grid so D-B always fits on one line */
+.chip-row.club-chips {
+  display: grid !important;
+  grid-template-columns: repeat(8, 1fr);
+  gap: 3px;
+  flex-wrap: nowrap;
+  width: 100%;
+}
+.chip-row.club-chips button {
+  padding: 8px 0;
+  min-height: 40px;
+  font-size: 12px;
+  flex: none !important;
+  min-width: 0;
+  width: auto;
+}
+
 .text-input, .num-input {
   font-family: var(--mono); font-size: 16px;
   padding: 8px 10px; border: 1px solid var(--line-strong);
@@ -458,10 +475,6 @@ body { padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-are
       <span class="label">Putts</span>
       <div class="num-row cols-5" id="puttsRow"></div>
     </div>
-    <div class="field-row inline">
-      <span class="label">GIR</span>
-      <div class="chip-row" data-field="gir"><button data-val="0">No</button><button data-val="1">Yes</button></div>
-    </div>
     <div class="field-row" id="fairwayRow">
       <span class="label">Off the tee</span>
       <div class="chip-row" data-field="tee_result">
@@ -469,6 +482,10 @@ body { padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-are
         <button data-val="F">Fairway</button>
         <button data-val="R">Right</button>
       </div>
+    </div>
+    <div class="field-row inline">
+      <span class="label">GIR</span>
+      <div class="chip-row" data-field="gir"><button data-val="0">No</button><button data-val="1">Yes</button></div>
     </div>
   </div>
 
@@ -507,7 +524,7 @@ body { padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-are
       <span class="label">Result</span>
       <div class="chip-row" data-field="first_putt_result">
         <button data-val="below">Below</button>
-        <button data-val="hit">Hit</button>
+        <button data-val="hit">Straight</button>
         <button data-val="above">Above</button>
       </div>
     </div>
