@@ -8,7 +8,7 @@ const CLUB_NAMES = {D:'Driver', F:'Fairway wood', H:'Hybrid', I:'Iron', S:'Sand'
 
 // Par per hole
 const PAR3_HOLES = new Set([5, 8, 13, 16]);
-const PAR5_HOLES = new Set([9, 14, 15, 18]);
+const PAR5_HOLES = new Set([9, 14, 15, 17]);
 function parOf(h) {
   if (PAR3_HOLES.has(h)) return 3;
   if (PAR5_HOLES.has(h)) return 5;
@@ -179,20 +179,24 @@ function renderRound() {
   // Fairways: count drives taken (non-par-3 holes where tee_result is recorded)
   let driveCount = 0;
   let fwCount = 0;
+  let leftCount = 0;
+  let rightCount = 0;
   for (let h = 1; h <= 18; h++) {
     if (PAR3_HOLES.has(h)) continue;
     const hd = r.holes[h];
     if (hd && hd.tee_result) {
       driveCount++;
       if (hd.tee_result === 'F') fwCount++;
+      else if (hd.tee_result === 'L') leftCount++;
+      else if (hd.tee_result === 'R') rightCount++;
     }
   }
-  // Missed swings = count of shots with quality <= 4
+  // Missed swings = count of shots with quality <= 5
   let missedSwings = 0;
   for (const hd of Object.values(r.holes)) {
     if (!hd.shots) continue;
     for (const shot of hd.shots) {
-      if (shot.quality && shot.quality <= 4) missedSwings++;
+      if (shot.quality && shot.quality <= 5) missedSwings++;
     }
   }
   document.getElementById('roundStats').innerHTML = `
@@ -200,7 +204,9 @@ function renderRound() {
     <div class="row"><span class="label">Total putts</span><span class="val">${putts || '—'}</span></div>
     <div class="row"><span class="label">GIR</span><span class="val">${girCount}/${filled || 18}</span></div>
     <div class="row"><span class="label">Fairways</span><span class="val">${fwCount}/${driveCount || '—'}</span></div>
-    <div class="row"><span class="label">Missed swings <span style="font-family:var(--mono); font-size:11px; color:var(--ink-dim);">(quality ≤ 4)</span></span><span class="val">${missedSwings}</span></div>
+    <div class="row"><span class="label" style="padding-left:16px; color:var(--ink-muted);">Missed left</span><span class="val">${leftCount}</span></div>
+    <div class="row"><span class="label" style="padding-left:16px; color:var(--ink-muted);">Missed right</span><span class="val">${rightCount}</span></div>
+    <div class="row"><span class="label">Missed swings <span style="font-family:var(--mono); font-size:11px; color:var(--ink-dim);">(quality ≤ 5)</span></span><span class="val">${missedSwings}</span></div>
   `;
   
   const completeBtn = document.getElementById('completeBtn');
