@@ -1,5 +1,5 @@
 // AQ PWA service worker — offline caching
-const CACHE_NAME = 'aq-v2';
+const CACHE_NAME = 'aq-v5';
 const ASSETS = ['./', './index.html', './app.js', './holes_data.js', './manifest.webmanifest'];
 
 self.addEventListener('install', e => {

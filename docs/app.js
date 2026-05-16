@@ -84,7 +84,7 @@ function renderRoundsList() {
     const filled = Object.keys(r.holes || {}).filter(h => r.holes[h].score).length;
     const totalScore = Object.values(r.holes || {}).reduce((s, h) => s + (h.score || 0), 0);
     const li = document.createElement('li');
-    li.className = 'round-item';
+    li.className = 'round-item' + (r.completed_at ? ' complete' : '');
     li.innerHTML = `
       <div>
         <div class="date">${fmtDate(r.date)}</div>
@@ -199,6 +199,16 @@ function renderRound() {
     <div class="row"><span class="label">GIR</span><span class="val">${girCount}/${filled || 18}</span></div>
     <div class="row"><span class="label">Fairways</span><span class="val">${fwCount}/14</span></div>
   `;
+  
+  // Complete button state
+  const completeBtn = document.getElementById('completeBtn');
+  if (r.completed_at) {
+    completeBtn.textContent = '✓ Round complete';
+    completeBtn.classList.add('done-state');
+  } else {
+    completeBtn.textContent = 'Round complete';
+    completeBtn.classList.remove('done-state');
+  }
 }
 
 // ── Hole entry ──
@@ -416,11 +426,11 @@ function exportCSV() {
       r.notes || '',
       h,
       r.pins[h-1],
-      hd.score || '',
-      hd.putts || '',
+      hd.score ?? '',
+      hd.putts ?? '',
       hd.gir ?? '',
       PAR3_HOLES.has(h) ? '' : (hd.fairway ?? ''),
-      hd.penalty || '',
+      hd.penalty ?? '',
       hd.approach_club || '',
       hd.approach_lie || '',
       hd.approach_distance || '',
@@ -464,6 +474,33 @@ document.getElementById('exportBtn').onclick = exportCSV;
 document.getElementById('editPinsBtn').onclick = () => {
   renderNewRound(getRound(currentRoundId));
   showScreen('newround');
+};
+
+document.getElementById('completeBtn').onclick = () => {
+  const r = getRound(currentRoundId);
+  if (r.completed_at) {
+    if (!confirm('Mark this round as not yet complete?')) return;
+    r.completed_at = null;
+  } else {
+    // Check for missing key data on holes that have a score
+    const missing = [];
+    for (let h = 1; h <= 18; h++) {
+      const hd = r.holes[h];
+      if (!hd || !hd.score) continue;
+      const probs = [];
+      if (!hd.sector) probs.push('sector');
+      if (hd.strokes_from_sector === undefined || hd.strokes_from_sector === null) probs.push('strokes from sector');
+      if (probs.length) missing.push(`H${h}: ${probs.join(', ')}`);
+    }
+    if (missing.length) {
+      const msg = `Missing data:\n\n${missing.join('\n')}\n\nMark round complete anyway?`;
+      if (!confirm(msg)) return;
+    }
+    r.completed_at = new Date().toISOString();
+  }
+  saveRounds();
+  renderRound();
+  toast(r.completed_at ? 'Round marked complete' : 'Round reopened');
 };
 
 document.getElementById('deleteRoundBtn').onclick = () => {
