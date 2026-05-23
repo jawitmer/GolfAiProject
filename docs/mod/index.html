@@ -431,6 +431,9 @@ body { padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-are
   <p class="section-label" id="roundsCount">Rounds</p>
   <ul class="round-list" id="roundsList"></ul>
   <button class="new-round-btn" id="newRoundBtn">+ New Round</button>
+  <p class="section-label" style="margin-top:32px;">Backup</p>
+  <button class="secondary-btn" id="backupBtn">Backup all (JSON)…</button>
+  <button class="secondary-btn" id="restoreBtn">Restore (JSON)…</button>
 </div>
 
 <div class="screen" id="screen-round">
@@ -450,7 +453,7 @@ body { padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-are
   <p class="section-label">Date</p>
   <input type="date" class="text-input" id="roundDateInput" style="width:100%; text-align:left; font-size:16px; padding:10px;">
   <p class="section-label">Notes (optional)</p>
-  <input type="text" class="text-input" id="roundNotesInput" style="width:100%; text-align:left; font-size:15px; padding:10px;" placeholder="e.g. Saturday morning with Jim">
+  <textarea class="text-input" id="roundNotesInput" rows="3" style="width:100%; font-size:15px; padding:10px; resize:none; overflow:hidden; min-height:64px; line-height:1.45;" placeholder="e.g. Saturday morning with Jim"></textarea>
   <p class="section-label" style="margin-top:24px;">Pin Position</p>
   <div class="single-pin-row" id="singlePinRow"></div>
   <button class="save-btn" id="createRoundBtn">Start Round</button>
@@ -471,10 +474,6 @@ body { padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-are
       <span class="label">Strokes</span>
       <div class="num-row cols-8" id="strokesRow"></div>
     </div>
-    <div class="field-row">
-      <span class="label">Putts</span>
-      <div class="num-row cols-5" id="puttsRow"></div>
-    </div>
     <div class="field-row" id="fairwayRow">
       <span class="label">Off the tee</span>
       <div class="chip-row" data-field="tee_result">
@@ -482,10 +481,6 @@ body { padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-are
         <button data-val="F">Fairway</button>
         <button data-val="R">Right</button>
       </div>
-    </div>
-    <div class="field-row inline">
-      <span class="label">GIR</span>
-      <div class="chip-row" data-field="gir"><button data-val="0">No</button><button data-val="1">Yes</button></div>
     </div>
   </div>
 
@@ -507,7 +502,7 @@ body { padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-are
   </div>
 
   <div class="field-group">
-    <div class="group-title">First Putt</div>
+    <div class="group-title">Putting</div>
     <div class="field-row inline">
       <span class="label">Distance <span class="hint">ft</span></span>
       <input type="number" class="num-input" inputmode="numeric" pattern="[0-9]*" id="firstPuttDist" placeholder="—">
@@ -527,6 +522,10 @@ body { padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-are
         <button data-val="hit">Straight</button>
         <button data-val="above">Above</button>
       </div>
+    </div>
+    <div class="field-row">
+      <span class="label">Putts <span class="hint">total</span></span>
+      <div class="num-row cols-5" id="puttsRow"></div>
     </div>
     <div class="field-row">
       <span class="label">Pelz <span class="hint">distance × direction</span></span>
