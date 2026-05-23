@@ -1,6 +1,7 @@
 // AQmod Data Entry PWA — separate from AQ
-// Schema per hole: score, putts, gir, tee_result(L/F/R), shots[{club,quality}],
+// Schema per hole: score, putts, tee_result(L/F/R), shots[{club,quality}],
 //   sector, strokes_from_sector, first_putt_slope, first_putt_result, pelz(1-9)
+// (Legacy rounds may also carry `gir`; preserved in CSV export, not collected on new rounds.)
 
 const STORAGE_KEY = 'aqmod_rounds_v1';
 const CLUBS = ['D','F','H','I','S','W','C','B'];
@@ -38,6 +39,10 @@ function fmtDate(iso) {
 }
 function uid() {
   return Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+}
+function autoGrow(el) {
+  el.style.height = 'auto';
+  el.style.height = el.scrollHeight + 'px';
 }
 function holeStatus(h) {
   if (!h) return 'empty';
@@ -105,7 +110,10 @@ function renderRoundsList() {
 function renderNewRound(existingRound) {
   const isEdit = !!existingRound;
   document.getElementById('roundDateInput').value = isEdit ? existingRound.date : new Date().toISOString().slice(0,10);
-  document.getElementById('roundNotesInput').value = isEdit ? (existingRound.notes || '') : '';
+  const notesInput = document.getElementById('roundNotesInput');
+  notesInput.value = isEdit ? (existingRound.notes || '') : '';
+  notesInput.oninput = () => autoGrow(notesInput);
+  requestAnimationFrame(() => autoGrow(notesInput));
   document.getElementById('createRoundBtn').textContent = isEdit ? 'Save Pin' : 'Start Round';
   
   const row = document.getElementById('singlePinRow');
@@ -175,7 +183,6 @@ function renderRound() {
   }
   
   const putts = Object.values(r.holes).reduce((s, h) => s + (h.putts || 0), 0);
-  const girCount = Object.values(r.holes).filter(h => h.gir === 1).length;
   // Fairways: count drives taken (non-par-3 holes where tee_result is recorded)
   let driveCount = 0;
   let fwCount = 0;
@@ -202,7 +209,6 @@ function renderRound() {
   document.getElementById('roundStats').innerHTML = `
     <div class="row"><span class="label">Total strokes</span><span class="val">${totalScore || '—'}</span></div>
     <div class="row"><span class="label">Total putts</span><span class="val">${putts || '—'}</span></div>
-    <div class="row"><span class="label">GIR</span><span class="val">${girCount}/${filled || 18}</span></div>
     <div class="row"><span class="label">Fairways</span><span class="val">${fwCount}/${driveCount || '—'}</span></div>
     <div class="row"><span class="label" style="padding-left:16px; color:var(--ink-muted);">Missed left</span><span class="val">${leftCount}</span></div>
     <div class="row"><span class="label" style="padding-left:16px; color:var(--ink-muted);">Missed right</span><span class="val">${rightCount}</span></div>
@@ -240,7 +246,7 @@ function renderHole() {
   buildNumRow('strokesFromSectorRow', 1, 4, 'strokes_from_sector');
   
   // GIR toggle
-  bindChipRow('gir', v => parseInt(v));
+  // (deferred: GIR will be derived later from sector + putts; nothing to bind for now)
   // Tee result chip row (par 3 → hide)
   bindChipRow('tee_result', v => v);
   document.getElementById('fairwayRow').style.display = PAR3_HOLES.has(h) ? 'none' : '';
@@ -480,6 +486,68 @@ function openSectorPicker(holeNum, callback) {
 document.getElementById('sectorModalClose').onclick = () => {
   document.getElementById('sectorModal').classList.remove('active');
 };
+
+// ── JSON Backup / Restore ──
+function backupJSON() {
+  const data = {
+    app: 'AQmod',
+    version: 1,
+    exported_at: new Date().toISOString(),
+    rounds
+  };
+  const blob = new Blob([JSON.stringify(data, null, 2)], {type: 'application/json'});
+  const filename = `aqmod_backup_${new Date().toISOString().slice(0,10)}.json`;
+  if (navigator.canShare && navigator.canShare({files: [new File([blob], filename, {type:'application/json'})]})) {
+    const file = new File([blob], filename, {type: 'application/json'});
+    navigator.share({files: [file], title: filename}).catch(()=> downloadBlob(blob, filename));
+  } else {
+    downloadBlob(blob, filename);
+  }
+}
+
+function restoreJSON() {
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = '.json,application/json';
+  input.onchange = e => {
+    const file = e.target.files && e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = ev => {
+      let data;
+      try { data = JSON.parse(ev.target.result); }
+      catch (err) { alert('Not a valid JSON file.'); return; }
+      if (!data || !Array.isArray(data.rounds)) {
+        alert('This does not look like an AQmod backup (no "rounds" array).');
+        return;
+      }
+      const valid = data.rounds.filter(r => r && r.id && r.date);
+      if (valid.length === 0) {
+        alert('Backup contained no valid rounds.');
+        return;
+      }
+      const summary = valid.length === data.rounds.length
+        ? `Restore ${valid.length} round${valid.length === 1 ? '' : 's'}? Existing rounds with matching IDs will be overwritten.`
+        : `Restore ${valid.length} valid round${valid.length === 1 ? '' : 's'} (${data.rounds.length - valid.length} skipped as malformed)? Existing rounds with matching IDs will be overwritten.`;
+      if (!confirm(summary)) return;
+      const byId = new Map(rounds.map(r => [r.id, r]));
+      let added = 0, updated = 0;
+      for (const r of valid) {
+        if (byId.has(r.id)) updated++; else added++;
+        byId.set(r.id, r);
+      }
+      rounds = Array.from(byId.values());
+      saveRounds();
+      renderRoundsList();
+      toast(`Restored: ${added} new, ${updated} updated`);
+    };
+    reader.readAsText(file);
+  };
+  input.click();
+}
+
+document.getElementById('backupBtn').onclick = backupJSON;
+document.getElementById('restoreBtn').onclick = restoreJSON;
 
 // ── CSV Export ──
 function exportCSV() {
