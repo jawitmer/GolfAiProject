@@ -124,6 +124,32 @@ body { padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-are
 .round-header { font-family: var(--serif); font-size: 24px; margin: 0 0 4px; }
 .round-header-meta { font-family: var(--mono); font-size: 12px; color: var(--ink-muted); margin-bottom: 16px; }
 
+.notes-section {
+  margin: 0 0 20px; padding: 10px 12px;
+  background: var(--bg-card); border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  font-family: var(--sans); font-size: 14px; color: var(--ink);
+  min-height: 20px;
+}
+.notes-section.empty { color: var(--ink-muted); font-style: italic; }
+.notes-section.editing { padding: 8px; }
+.notes-section textarea {
+  width: 100%; box-sizing: border-box;
+  font-family: var(--sans); font-size: 14px; line-height: 1.45;
+  padding: 8px; border: 1px solid var(--line); border-radius: var(--radius-sm);
+  background: var(--bg); color: var(--ink);
+  resize: none; overflow: hidden; min-height: 48px;
+}
+.notes-section .edit-actions { display: flex; gap: 8px; margin-top: 8px; }
+.notes-section .edit-actions button {
+  flex: 1; padding: 8px; font-size: 14px;
+  font-family: var(--sans); border-radius: var(--radius-sm);
+  border: 1px solid var(--line-strong); background: var(--bg-card); color: var(--ink);
+}
+.notes-section .edit-actions .done-btn {
+  background: var(--green); color: #F3EFE5; border-color: var(--green);
+}
+
 .holes-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 6px; }
 @media (max-width: 360px) { .holes-grid { grid-template-columns: repeat(5, 1fr); gap: 5px; } }
 .hole-tile {
@@ -439,6 +465,7 @@ body { padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-are
 <div class="screen" id="screen-round">
   <h2 class="round-header" id="roundDate"></h2>
   <p class="round-header-meta" id="roundMeta"></p>
+  <div class="notes-section" id="notesSection"></div>
   <p class="section-label">Holes</p>
   <div class="holes-grid" id="holesGrid"></div>
   <div class="round-stats" id="roundStats"></div>
