@@ -155,6 +155,46 @@ function renderNewRound(existingRound) {
   };
 }
 
+// ── Round notes (inline editor) ──
+function renderNotesSection(r) {
+  const sec = document.getElementById('notesSection');
+  sec.className = 'notes-section' + (r.notes ? '' : ' empty');
+  sec.innerHTML = '';
+  const display = document.createElement('div');
+  display.textContent = r.notes || 'Add notes…';
+  sec.appendChild(display);
+  sec.onclick = () => editNotes(r);
+}
+
+function editNotes(r) {
+  const sec = document.getElementById('notesSection');
+  sec.className = 'notes-section editing';
+  sec.onclick = null;
+  sec.innerHTML = '';
+  const ta = document.createElement('textarea');
+  ta.value = r.notes || '';
+  ta.placeholder = 'e.g. Saturday morning with Jim';
+  ta.oninput = () => autoGrow(ta);
+  sec.appendChild(ta);
+  const actions = document.createElement('div');
+  actions.className = 'edit-actions';
+  const cancel = document.createElement('button');
+  cancel.textContent = 'Cancel';
+  cancel.onclick = () => renderNotesSection(r);
+  const done = document.createElement('button');
+  done.textContent = 'Done';
+  done.className = 'done-btn';
+  done.onclick = () => {
+    r.notes = ta.value.trim();
+    saveRounds();
+    renderNotesSection(r);
+  };
+  actions.appendChild(cancel);
+  actions.appendChild(done);
+  sec.appendChild(actions);
+  requestAnimationFrame(() => { autoGrow(ta); ta.focus(); });
+}
+
 // ── Round dashboard ──
 function renderRound() {
   const r = getRound(currentRoundId);
@@ -163,7 +203,8 @@ function renderRound() {
   const filled = Object.keys(r.holes).filter(h => r.holes[h].score).length;
   const totalScore = Object.values(r.holes).reduce((s, h) => s + (h.score || 0), 0);
   document.getElementById('roundMeta').textContent =
-    `${filled}/18 holes recorded${totalScore ? ' · ' + totalScore + ' strokes' : ''}${r.notes ? ' · ' + r.notes : ''}`;
+    `${filled}/18 holes recorded${totalScore ? ' · ' + totalScore + ' strokes' : ''}`;
+  renderNotesSection(r);
   
   const grid = document.getElementById('holesGrid');
   grid.innerHTML = '';
