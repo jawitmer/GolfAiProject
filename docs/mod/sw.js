@@ -1,5 +1,5 @@
 // AQmod service worker — separate cache name from AQ
-const CACHE_NAME = 'aqmod-v19';
+const CACHE_NAME = 'aqmod-v20';
 const ASSETS = ['./', './index.html', './app.js', './holes_data.js', './manifest.webmanifest'];
 
 self.addEventListener('install', e => {
