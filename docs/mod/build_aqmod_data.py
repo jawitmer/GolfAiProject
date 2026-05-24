@@ -19,17 +19,23 @@ Output schema per hole (str-keyed):
   ylim          [ymin, ymax]
   descriptions  {sector_key: text}
   entries       [{entry_num, master_code, description}, ...] in sector_order
+  scores        {sector_key: [s_pin1, s_pin2, s_pin3, s_pin4, s_pin5]}
+  label_pos     {sector_key: [x, y] | null}  -- representative_point of the
+                effective region (raw polygon minus higher-priority polygons),
+                so labels land inside the visible portion. null when the
+                sector is fully covered (skip the label).
   photo_b64     bare base64 (no "data:..." prefix)
   photo_dims    [W, H]
 
-Scores are intentionally omitted from this build (per project decision —
-AQmod records sectors only; the rubric lookup happens in R post-round).
-The generator can be extended later by emitting `scores` from the master.
+Scores are now emitted so the picker can color sectors by AQ score and
+display the score in each. (The R post-round rubric lookup is unchanged.)
 """
 import json
 import re
 import importlib.util
 from pathlib import Path
+from shapely.geometry import Polygon as ShPolygon
+from shapely.ops import unary_union
 
 HERE = Path(__file__).parent
 SRC_PY = HERE / "all_holes_data_v3_59_9.py"
@@ -331,6 +337,31 @@ def sort_key(sk):
     return (num, priority.get(suf, 99), suf)
 
 
+def compute_label_positions(sectors, sector_order):
+    """For each sector, return [x, y] of the representative_point of its
+    effective region (raw polygon minus higher-priority polygons stacked
+    on top). Sectors whose effective region is empty get None.
+    Matches the AQ_Sector_Maps render so app and PDF agree on placement.
+    """
+    out = {}
+    covered = None
+    for sk in sector_order:
+        try:
+            raw = ShPolygon(sectors[sk])
+            if not raw.is_valid:
+                raw = raw.buffer(0)
+            eff = raw if covered is None else raw.difference(covered)
+            covered = raw if covered is None else unary_union([covered, raw])
+            if eff.is_empty:
+                out[sk] = None
+            else:
+                rp = eff.representative_point()
+                out[sk] = [float(rp.x), float(rp.y)]
+        except Exception:
+            out[sk] = None
+    return out
+
+
 def main():
     spec = importlib.util.spec_from_file_location("master", SRC_PY)
     master = importlib.util.module_from_spec(spec)
@@ -349,6 +380,7 @@ def main():
             {"entry_num": i + 1, "master_code": sk, "description": hole_descs.get(sk, "TBD")}
             for i, sk in enumerate(entry_order)
         ]
+        label_pos = compute_label_positions(h["sectors"], sector_order)
 
         out[str(hnum)] = {
             "pin_labels":   {str(k): v for k, v in h["pin_labels"].items()},
@@ -359,6 +391,8 @@ def main():
             "ylim":         to_jsonable(h["ylim"]),
             "descriptions": descriptions,
             "entries":      entries,
+            "scores":       {sk: to_jsonable(h["scores"][sk]) for sk in sector_order},
+            "label_pos":    label_pos,
             "photo_b64":    strip_data_prefix(h["photo_b64"]),
             "photo_dims":   to_jsonable(h["photo_dims"]),
         }
