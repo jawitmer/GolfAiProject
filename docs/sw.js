@@ -1,5 +1,5 @@
-// AQ PWA service worker — offline caching
-const CACHE_NAME = 'aq-v5';
+// AQmod service worker — separate cache name from AQ
+const CACHE_NAME = 'aqmod-v20';
 const ASSETS = ['./', './index.html', './app.js', './holes_data.js', './manifest.webmanifest'];
 
 self.addEventListener('install', e => {
