@@ -1,7 +1,8 @@
 // AQmod Data Entry PWA — separate from AQ
 // Schema per hole: score, putts, tee_result(L/F/R), shots[{club,quality}],
 //   sector, strokes_from_sector, first_putt_slope, first_putt_result, pelz(1-9)
-// (Legacy rounds may also carry `gir`; preserved in CSV export, not collected on new rounds.)
+// (Legacy rounds may also carry `gir`; preserved in CSV export. New rounds derive
+//  GIR at display time from sector + strokes_from_sector + par.)
 
 const STORAGE_KEY = 'aqmod_rounds_v1';
 const CLUBS = ['D','F','H','I','S','W','C','B'];
@@ -247,12 +248,27 @@ function renderRound() {
       if (shot.quality && shot.quality <= 5) missedSwings++;
     }
   }
+  // GIR: derived from sector + strokes_from_sector. A hole is GIR when the recorded
+  // sector is on the green (description starts "Green,") AND the shot that reached
+  // it (score - strokes_from_sector) is at or below par - 2.
+  let girAttempted = 0;
+  let girMade = 0;
+  for (let h = 1; h <= 18; h++) {
+    const hd = r.holes[h];
+    if (!hd || !hd.score || !hd.sector ||
+        hd.strokes_from_sector === undefined || hd.strokes_from_sector === null) continue;
+    girAttempted++;
+    const desc = (HOLES_DATA[String(h)].descriptions || {})[hd.sector] || '';
+    const reachedAt = hd.score - hd.strokes_from_sector;
+    if (desc.startsWith('Green,') && reachedAt <= parOf(h) - 2) girMade++;
+  }
   document.getElementById('roundStats').innerHTML = `
     <div class="row"><span class="label">Total strokes</span><span class="val">${totalScore || '—'}</span></div>
     <div class="row"><span class="label">Total putts</span><span class="val">${putts || '—'}</span></div>
     <div class="row"><span class="label">Fairways</span><span class="val">${fwCount}/${driveCount || '—'}</span></div>
     <div class="row"><span class="label" style="padding-left:16px; color:var(--ink-muted);">Missed left</span><span class="val">${leftCount}</span></div>
     <div class="row"><span class="label" style="padding-left:16px; color:var(--ink-muted);">Missed right</span><span class="val">${rightCount}</span></div>
+    <div class="row"><span class="label">GIR</span><span class="val">${girMade}/${girAttempted || '—'}</span></div>
     <div class="row"><span class="label">Missed swings <span style="font-family:var(--mono); font-size:11px; color:var(--ink-dim);">(quality ≤ 5)</span></span><span class="val">${missedSwings}</span></div>
   `;
   
@@ -286,8 +302,7 @@ function renderHole() {
   // Strokes from sector 1-4
   buildNumRow('strokesFromSectorRow', 1, 4, 'strokes_from_sector');
   
-  // GIR toggle
-  // (deferred: GIR will be derived later from sector + putts; nothing to bind for now)
+  // GIR is derived from sector + strokes_from_sector at display time (no per-hole input).
   // Tee result chip row (par 3 → hide)
   bindChipRow('tee_result', v => v);
   document.getElementById('fairwayRow').style.display = PAR3_HOLES.has(h) ? 'none' : '';
