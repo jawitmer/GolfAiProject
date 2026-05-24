@@ -45,6 +45,17 @@ function autoGrow(el) {
   el.style.height = 'auto';
   el.style.height = el.scrollHeight + 'px';
 }
+// 8-stop AQ-score color gradient (matches AQ_Sector_Maps PDF).
+function scoreToColor(v) {
+  if (v >= 4.5) return '#1B7A2B';
+  if (v >= 4.0) return '#4CAF50';
+  if (v >= 3.5) return '#8BC34A';
+  if (v >= 3.0) return '#CDDC39';
+  if (v >= 2.5) return '#FFC107';
+  if (v >= 2.0) return '#FF9800';
+  if (v >= 1.5) return '#FF5722';
+  return '#B71C1C';
+}
 function holeStatus(h) {
   if (!h) return 'empty';
   if (h.score && h.score > 0) return 'complete';
@@ -489,23 +500,22 @@ function openSectorPicker(holeNum, callback) {
   let svg = `<svg viewBox="0 0 ${iw} ${ih}" preserveAspectRatio="xMidYMid meet">`;
   svg += `<image href="data:image/jpeg;base64,${hd.photo_b64}" x="0" y="0" width="${iw}" height="${ih}" opacity="0.85"/>`;
   
-  const entryByCode = {};
-  hd.entries.forEach(e => entryByCode[e.master_code] = e.entry_num);
-  
+  const pinNum = getRound(currentRoundId).pins[holeNum - 1];
   for (const sk of hd.sector_order) {
     const poly = hd.sectors[sk];
     const pts = poly.map(p => p.join(',')).join(' ');
-    const isGreen = (hd.descriptions[sk] || '').toLowerCase().includes('green');
-    const fill = isGreen ? '#8B72B3' : '#C0A878';
-    const num = entryByCode[sk] || '?';
-    svg += `<polygon points="${pts}" fill="${fill}" stroke="#FFFFFF" stroke-width="1.2" fill-opacity="0.5" data-code="${sk}"/>`;
-    const cx = poly.reduce((s,p)=>s+p[0],0) / poly.length;
-    const cy = poly.reduce((s,p)=>s+p[1],0) / poly.length;
-    const fontSize = Math.max(11, Math.min(iw, ih) / 30);
-    svg += `<text x="${cx}" y="${cy}" font-size="${fontSize}" font-family="ui-monospace, monospace" text-anchor="middle" dominant-baseline="middle" fill="#1A1A1A" font-weight="600" pointer-events="none">${num}</text>`;
+    const score = (hd.scores && hd.scores[sk]) ? hd.scores[sk][pinNum - 1] : null;
+    const fill = (score !== null) ? scoreToColor(score) : '#C0A878';
+    svg += `<polygon points="${pts}" fill="${fill}" stroke="#FFFFFF" stroke-width="1.2" fill-opacity="0.75" data-code="${sk}"/>`;
+    const lp = hd.label_pos && hd.label_pos[sk];
+    if (lp && score !== null) {
+      const fontSize = Math.max(11, Math.min(iw, ih) / 30);
+      const pillW = fontSize * 2.0, pillH = fontSize * 1.1, pillR = fontSize * 0.3;
+      svg += `<rect x="${lp[0] - pillW/2}" y="${lp[1] - pillH/2}" width="${pillW}" height="${pillH}" rx="${pillR}" ry="${pillR}" fill="#FFFFFF" fill-opacity="0.75" pointer-events="none"/>`;
+      svg += `<text x="${lp[0]}" y="${lp[1]}" font-size="${fontSize}" font-family="ui-monospace, monospace" text-anchor="middle" dominant-baseline="middle" fill="#1A1A1A" font-weight="700" pointer-events="none">${score.toFixed(1)}</text>`;
+    }
   }
-  
-  const pinNum = getRound(currentRoundId).pins[holeNum - 1];
+
   const pinPos = hd.pin_pos[pinNum];
   if (pinPos) {
     svg += `<circle cx="${pinPos[0]}" cy="${pinPos[1]}" r="${Math.max(5, Math.min(iw,ih)/55)}" fill="#B8472E" stroke="#1A1A1A" stroke-width="1.5"/>`;
