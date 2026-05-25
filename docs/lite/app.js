@@ -1,6 +1,6 @@
-// AQlite Data Entry PWA — stripped-down variant of AQmod (no per-shot tee-to-green capture).
+// AQlite Data Entry PWA — stripped-down variant of AQmod (no per-shot tee-to-green capture, no Pelz).
 // Schema per hole: score, putts, tee_result(L/F/R),
-//   sector, strokes_from_sector, first_putt_slope, first_putt_result, pelz(1-9)
+//   sector, strokes_from_sector, first_putt_slope, first_putt_result
 // (Legacy rounds may also carry `gir`; preserved in CSV export. New rounds derive
 //  GIR at display time from sector + strokes_from_sector + par.)
 
@@ -335,9 +335,6 @@ function renderHole() {
     currentHoleData.first_putt_dist = isNaN(v) ? null : v;
   };
   
-  // Pelz 3x3 grid
-  buildPelzGrid();
-  
   document.getElementById('saveHoleBtn').onclick = () => {
     saveRounds(); toast('Saved'); renderRound(); showScreen('round');
   };
@@ -375,24 +372,6 @@ function bindChipRow(field, parseFn) {
         buttons.forEach(bb => bb.classList.toggle('on', bb === b));
       };
     });
-  });
-}
-
-function buildPelzGrid() {
-  const grid = document.getElementById('pelzGrid');
-  grid.innerHTML = '';
-  // Layout: row 1 = long (7,8,9), row 2 = right dist (4,5,6), row 3 = short (1,2,3)
-  const layout = [7,8,9, 4,5,6, 1,2,3];
-  layout.forEach(n => {
-    const b = document.createElement('button');
-    b.textContent = n;
-    b.dataset.val = n;
-    if (currentHoleData.pelz === n) b.classList.add('on');
-    b.onclick = () => {
-      currentHoleData.pelz = n;
-      grid.querySelectorAll('button').forEach(bb => bb.classList.toggle('on', bb === b));
-    };
-    grid.appendChild(b);
   });
 }
 
@@ -529,7 +508,7 @@ function exportCSV() {
   const rows = [];
   // Header
   const baseCols = ['date','notes','hole','par','pin','score','putts','gir','tee_result',
-                    'sector','strokes_from_sector','first_putt_dist','first_putt_slope','first_putt_result','pelz'];
+                    'sector','strokes_from_sector','first_putt_dist','first_putt_slope','first_putt_result'];
   rows.push(baseCols);
   
   for (let h = 1; h <= 18; h++) {
@@ -550,7 +529,6 @@ function exportCSV() {
       hd.first_putt_dist || '',
       hd.first_putt_slope || '',
       hd.first_putt_result || '',
-      hd.pelz ?? '',
     ];
     rows.push(row);
   }
@@ -606,7 +584,6 @@ document.getElementById('completeBtn').onclick = () => {
         if (!hd.first_putt_dist) probs.push('first putt distance');
         if (!hd.first_putt_slope) probs.push('first putt slope');
         if (!hd.first_putt_result) probs.push('first putt result');
-        if (!hd.pelz) probs.push('Pelz');
       }
       if (probs.length) missing.push(`H${h}: ${probs.join(', ')}`);
     }
