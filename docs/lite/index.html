@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="AQlite">
+<meta name="theme-color" content="#3D2B5C">
+<title>AQlite — Oberlin</title>
+
+<link rel="apple-touch-icon" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%233D2B5C'/><text x='50' y='62' text-anchor='middle' font-family='Georgia,serif' font-size='32' font-style='italic' fill='%23F3EFE5'>AQ</text><text x='50' y='86' text-anchor='middle' font-family='Georgia,serif' font-size='24' font-style='italic' fill='%23F3EFE5'>mod</text></svg>">
+<link rel="manifest" href="manifest.webmanifest">
+
+<style>
+:root {
+  --bg: #F3EFE5;
+  --bg-card: #FBFAF6;
+  --ink: #1A1A1A;
+  --ink-muted: #6B6B6B;
+  --ink-dim: #A0A0A0;
+  --line: #D8D2C2;
+  --line-strong: #8E8676;
+  --green: #3D2B5C;
+  --green-mid: #5A4585;
+  --green-light: #8B72B3;
+  --accent: #B8472E;
+  --warn: #C28B1F;
+  --shadow: 0 1px 3px rgba(26,26,26,0.06), 0 1px 2px rgba(26,26,26,0.04);
+  --shadow-lg: 0 4px 16px rgba(26,26,26,0.10), 0 2px 4px rgba(26,26,26,0.06);
+  --radius: 10px;
+  --radius-sm: 6px;
+  --serif: 'Georgia', 'Cambria', 'Times New Roman', serif;
+  --sans: -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif;
+  --mono: 'SF Mono', ui-monospace, 'Menlo', monospace;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #1A1A18;
+    --bg-card: #232220;
+    --ink: #F0EDE4;
+    --ink-muted: #B8B2A4;
+    --ink-dim: #807A6F;
+    --line: #3A3833;
+    --line-strong: #4F4C45;
+    --green: #8B72B3;
+    --green-mid: #9D87BF;
+    --green-light: #B5A2D1;
+    --accent: #D17357;
+    --warn: #D9A33D;
+  }
+}
+
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+html, body {
+  margin: 0; padding: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--sans);
+  font-size: 16px;
+  line-height: 1.4;
+  overscroll-behavior: none;
+  -webkit-text-size-adjust: 100%;
+}
+body { padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left); }
+
+.topbar {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 12px 20px;
+  border-bottom: 1px solid var(--line);
+  background: var(--bg);
+  position: sticky; top: 0; z-index: 50;
+}
+.topbar h1 {
+  font-family: var(--serif); font-style: italic; font-weight: 400;
+  font-size: 22px; margin: 0; letter-spacing: -0.02em;
+}
+.topbar .crumb {
+  font-family: var(--mono); font-size: 11px; color: var(--ink-muted);
+  text-transform: uppercase; letter-spacing: 0.08em;
+}
+.topbar .back-btn {
+  font-size: 17px; color: var(--green);
+  background: none; border: none; padding: 4px 12px 4px 0;
+  font-family: var(--sans); font-weight: 500;
+}
+.topbar .back-btn:active { opacity: 0.5; }
+
+.screen { display: none; padding: 20px; padding-bottom: 80px; }
+.screen.active { display: block; }
+
+.round-list { list-style: none; padding: 0; margin: 0; }
+.round-item {
+  background: var(--bg-card); border: 1px solid var(--line);
+  border-radius: var(--radius); padding: 14px 16px; margin-bottom: 10px;
+  display: flex; align-items: center; justify-content: space-between;
+  box-shadow: var(--shadow);
+}
+.round-item .date { font-family: var(--serif); font-size: 17px; }
+.round-item .meta { font-family: var(--mono); font-size: 12px; color: var(--ink-muted); margin-top: 4px; }
+.round-item .arrow { color: var(--ink-dim); font-size: 20px; }
+.round-item.complete::before {
+  content: '✓'; display: inline-flex; align-items: center; justify-content: center;
+  width: 22px; height: 22px; background: var(--green); color: #F3EFE5;
+  border-radius: 50%; font-size: 13px; margin-right: 12px; flex-shrink: 0;
+}
+
+.new-round-btn {
+  display: block; width: 100%;
+  background: var(--green); color: #F3EFE5;
+  border: none; padding: 14px; font-size: 16px; font-weight: 500;
+  font-family: var(--sans); border-radius: var(--radius); margin-top: 16px;
+  box-shadow: var(--shadow);
+}
+.new-round-btn:active { transform: scale(0.98); }
+
+.section-label {
+  font-family: var(--mono); font-size: 11px;
+  text-transform: uppercase; letter-spacing: 0.1em;
+  color: var(--ink-muted); margin: 24px 0 10px;
+}
+
+.round-header { font-family: var(--serif); font-size: 24px; margin: 0 0 4px; }
+.round-header-meta { font-family: var(--mono); font-size: 12px; color: var(--ink-muted); margin-bottom: 16px; }
+
+.notes-section {
+  margin: 0 0 20px; padding: 10px 12px;
+  background: var(--bg-card); border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  font-family: var(--sans); font-size: 14px; color: var(--ink);
+  min-height: 20px;
+}
+.notes-section.empty { color: var(--ink-muted); font-style: italic; }
+.notes-section.editing { padding: 8px; }
+.notes-section textarea {
+  width: 100%; box-sizing: border-box;
+  font-family: var(--sans); font-size: 14px; line-height: 1.45;
+  padding: 8px; border: 1px solid var(--line); border-radius: var(--radius-sm);
+  background: var(--bg); color: var(--ink);
+  resize: none; overflow: hidden; min-height: 48px;
+}
+.notes-section .edit-actions { display: flex; gap: 8px; margin-top: 8px; }
+.notes-section .edit-actions button {
+  flex: 1; padding: 8px; font-size: 14px;
+  font-family: var(--sans); border-radius: var(--radius-sm);
+  border: 1px solid var(--line-strong); background: var(--bg-card); color: var(--ink);
+}
+.notes-section .edit-actions .done-btn {
+  background: var(--green); color: #F3EFE5; border-color: var(--green);
+}
+
+.holes-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 6px; }
+@media (max-width: 360px) { .holes-grid { grid-template-columns: repeat(5, 1fr); gap: 5px; } }
+.hole-tile {
+  aspect-ratio: 1 / 1; display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  background: var(--bg-card); border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  font-family: var(--serif); font-size: 17px;
+  position: relative;
+}
+.hole-tile .status-dot {
+  position: absolute; top: 4px; right: 4px;
+  width: 7px; height: 7px; border-radius: 50%;
+}
+.hole-tile.complete { background: var(--green); color: #F3EFE5; border-color: var(--green); }
+.hole-tile.partial .status-dot { background: var(--warn); }
+.hole-tile .par { font-family: var(--mono); font-size: 10px; opacity: 0.6; margin-top: 1px; }
+.hole-tile .score { font-family: var(--mono); font-size: 11px; opacity: 0.75; margin-top: 1px; }
+.hole-tile:active { transform: scale(0.97); }
+
+.round-stats {
+  margin-top: 20px; padding: 14px 16px;
+  background: var(--bg-card); border: 1px solid var(--line); border-radius: var(--radius);
+}
+.round-stats .row { display: flex; justify-content: space-between; padding: 4px 0; font-size: 14px; }
+.round-stats .row .label { color: var(--ink-muted); }
+.round-stats .row .val { font-family: var(--mono); font-weight: 600; }
+
+.secondary-btn {
+  display: block; width: 100%;
+  background: var(--bg-card); color: var(--ink);
+  border: 1px solid var(--line-strong);
+  padding: 12px; font-size: 15px;
+  font-family: var(--sans); border-radius: var(--radius);
+  margin-top: 10px;
+}
+.secondary-btn.done-state {
+  background: var(--green); color: #F3EFE5; border-color: var(--green);
+}
+.danger-btn {
+  display: block; width: 100%;
+  background: var(--bg-card); color: var(--accent);
+  border: 1px solid var(--line-strong);
+  padding: 12px; font-size: 15px;
+  font-family: var(--sans); border-radius: var(--radius);
+  margin-top: 10px;
+}
+
+.single-pin-row { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin-top: 8px; }
+.single-pin-row .pin-cell {
+  aspect-ratio: 1.6 / 1;
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--serif); font-size: 24px;
+  background: var(--bg-card); border: 1.5px solid var(--line-strong);
+  border-radius: var(--radius); color: var(--ink);
+}
+.single-pin-row .pin-cell.selected {
+  background: var(--green); color: #F3EFE5; border-color: var(--green);
+}
+.single-pin-row .pin-cell:active { transform: scale(0.97); }
+
+.hole-header {
+  display: flex; justify-content: space-between; align-items: baseline;
+  margin-bottom: 16px;
+}
+.hole-header h2 { font-family: var(--serif); font-size: 28px; font-weight: 400; margin: 0; }
+.hole-header .pin-display { font-family: var(--mono); font-size: 13px; color: var(--ink-muted); }
+.hole-header .pin-display .pin-num { color: var(--green); font-weight: 700; font-size: 15px; }
+.hole-header .par-badge {
+  font-family: var(--mono); font-size: 11px;
+  background: var(--green-light); color: var(--bg);
+  border-radius: 10px; padding: 2px 8px; margin-left: 8px;
+}
+
+.field-group {
+  background: var(--bg-card); border: 1px solid var(--line);
+  border-radius: var(--radius); padding: 12px 14px; margin-bottom: 12px;
+}
+.field-group .group-title {
+  font-family: var(--mono); font-size: 11px;
+  text-transform: uppercase; letter-spacing: 0.1em;
+  color: var(--ink-muted); margin-bottom: 10px;
+}
+.field-row {
+  display: flex; flex-direction: column;
+  align-items: stretch;
+  padding: 8px 0;
+  border-top: 1px solid var(--line);
+}
+.field-row:first-of-type, .field-row.no-border { border-top: none; }
+.field-row .label {
+  font-size: 15px; color: var(--ink);
+  margin-bottom: 6px;
+}
+.field-row .label .hint {
+  font-family: var(--mono); font-size: 11px;
+  color: var(--ink-muted); margin-left: 6px;
+}
+
+.field-row.inline {
+  flex-direction: row; align-items: center; justify-content: space-between;
+}
+.field-row.inline .label { margin-bottom: 0; }
+
+/* Button row for 1..N picker */
+.num-row {
+  display: grid; gap: 6px;
+}
+.num-row button {
+  padding: 12px 0;
+  border: 1px solid var(--line-strong);
+  background: var(--bg); color: var(--ink);
+  border-radius: var(--radius-sm);
+  font-family: var(--mono); font-size: 16px;
+  min-height: 44px;
+  font-weight: 500;
+}
+.num-row button.on {
+  background: var(--green); color: #F3EFE5; border-color: var(--green);
+}
+.num-row.cols-3 { grid-template-columns: repeat(3, 1fr); }
+.num-row.cols-4 { grid-template-columns: repeat(4, 1fr); }
+.num-row.cols-5 { grid-template-columns: repeat(5, 1fr); }
+.num-row.cols-6 { grid-template-columns: repeat(6, 1fr); }
+.num-row.cols-8 { grid-template-columns: repeat(8, 1fr); }
+
+.chip-row { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip-row button {
+  padding: 8px 12px;
+  border: 1px solid var(--line);
+  background: var(--bg); color: var(--ink);
+  border-radius: var(--radius-sm);
+  font-family: var(--mono); font-size: 13px;
+  min-height: 40px; flex: 1;
+}
+.chip-row button.on { background: var(--green); color: #F3EFE5; border-color: var(--green); }
+
+/* Club chips: fixed 8-column grid so D-B always fits on one line */
+.chip-row.club-chips {
+  display: grid !important;
+  grid-template-columns: repeat(8, 1fr);
+  gap: 3px;
+  flex-wrap: nowrap;
+  width: 100%;
+}
+.chip-row.club-chips button {
+  padding: 8px 0;
+  min-height: 40px;
+  font-size: 12px;
+  flex: none !important;
+  min-width: 0;
+  width: auto;
+}
+
+.text-input, .num-input {
+  font-family: var(--mono); font-size: 16px;
+  padding: 8px 10px; border: 1px solid var(--line-strong);
+  border-radius: var(--radius-sm); background: var(--bg); color: var(--ink);
+}
+.num-input { width: 80px; text-align: right; }
+
+.sector-pick-btn {
+  display: block; width: 100%;
+  padding: 12px; margin-top: 6px;
+  background: var(--bg); border: 1.5px dashed var(--line-strong);
+  border-radius: var(--radius-sm);
+  font-family: var(--sans); font-size: 15px; color: var(--ink-muted);
+}
+.sector-pick-btn.selected {
+  background: var(--green); color: #F3EFE5; border: 1.5px solid var(--green);
+}
+.sector-pick-btn .master-code {
+  font-family: var(--mono); font-size: 13px; opacity: 0.9;
+  display: block; margin-top: 2px;
+}
+
+.save-btn {
+  display: block; width: 100%;
+  background: var(--green); color: #F3EFE5;
+  border: none; padding: 16px; font-size: 17px; font-weight: 600;
+  font-family: var(--sans); border-radius: var(--radius); margin-top: 20px;
+  box-shadow: var(--shadow);
+}
+.save-btn:active { transform: scale(0.99); }
+
+/* Pelz 3x3 grid */
+.pelz-grid {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px;
+  max-width: 200px;
+  margin: 4px 0;
+}
+.pelz-grid button {
+  aspect-ratio: 1 / 1;
+  padding: 0;
+  border: 1px solid var(--line-strong);
+  background: var(--bg); color: var(--ink);
+  border-radius: var(--radius-sm);
+  font-family: var(--mono); font-size: 18px;
+  font-weight: 500;
+}
+.pelz-grid button.on { background: var(--green); color: #F3EFE5; border-color: var(--green); }
+
+/* Modal */
+.modal-overlay {
+  position: fixed; inset: 0;
+  background: rgba(26,26,26,0.5); z-index: 100; display: none;
+}
+.modal-overlay.active { display: flex; flex-direction: column; }
+.modal-header {
+  padding: 12px 16px;
+  background: var(--bg); border-bottom: 1px solid var(--line);
+  display: flex; justify-content: space-between; align-items: center;
+}
+.modal-header .title { font-family: var(--serif); font-size: 18px; }
+.modal-header .close { font-size: 17px; color: var(--green); background: none; border: none; padding: 4px 8px; }
+.modal-body { flex: 1; overflow: auto; background: var(--bg); padding: 12px; }
+.sector-svg-wrap {
+  width: 100%; background: var(--bg-card);
+  border-radius: var(--radius); overflow: hidden;
+  display: flex; justify-content: center;
+}
+.sector-svg-wrap svg { width: 100%; height: auto; display: block; }
+.sector-svg-wrap polygon { cursor: pointer; transition: opacity 0.15s; }
+.sector-svg-wrap polygon:active { opacity: 1; }
+.entry-list { list-style: none; padding: 0; margin: 16px 0 0; }
+.entry-list li {
+  display: flex; align-items: center;
+  padding: 12px 14px; margin-bottom: 4px;
+  background: var(--bg-card); border: 1px solid var(--line);
+  border-radius: var(--radius-sm); font-size: 15px;
+}
+.entry-list li .num {
+  font-family: var(--mono); font-size: 13px; color: var(--ink-muted);
+  background: var(--bg); border: 1px solid var(--line);
+  border-radius: 4px; padding: 2px 8px; margin-right: 12px;
+  min-width: 26px; text-align: center;
+}
+.entry-list li .master {
+  font-family: var(--mono); font-size: 12px;
+  color: var(--ink-muted); margin-left: auto;
+}
+.entry-list li:active { background: var(--green); color: #F3EFE5; }
+.entry-list li:active .num, .entry-list li:active .master { color: #D8D2C2; }
+
+.toast {
+  position: fixed; bottom: 32px; left: 50%; transform: translateX(-50%);
+  background: var(--green-mid); color: #F3EFE5;
+  padding: 10px 18px; border-radius: 20px;
+  font-size: 14px; z-index: 200;
+  box-shadow: var(--shadow-lg);
+  opacity: 0; transition: opacity 0.2s; pointer-events: none;
+}
+.toast.show { opacity: 1; }
+.empty-state {
+  text-align: center; color: var(--ink-muted);
+  padding: 40px 20px; font-style: italic; font-family: var(--serif);
+}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <button class="back-btn" id="backBtn" style="display:none;">‹ Back</button>
+  <h1 id="topTitle">AQlite</h1>
+  <span class="crumb" id="topCrumb">Oberlin</span>
+</div>
+
+<div class="screen active" id="screen-rounds">
+  <p class="section-label" id="roundsCount">Rounds</p>
+  <ul class="round-list" id="roundsList"></ul>
+  <button class="new-round-btn" id="newRoundBtn">+ New Round</button>
+  <p class="section-label" style="margin-top:32px;">Backup</p>
+  <button class="secondary-btn" id="backupBtn">Backup all (JSON)…</button>
+  <button class="secondary-btn" id="restoreBtn">Restore (JSON)…</button>
+</div>
+
+<div class="screen" id="screen-round">
+  <h2 class="round-header" id="roundDate"></h2>
+  <p class="round-header-meta" id="roundMeta"></p>
+  <div class="notes-section" id="notesSection"></div>
+  <p class="section-label">Holes</p>
+  <div class="holes-grid" id="holesGrid"></div>
+  <div class="round-stats" id="roundStats"></div>
+  <button class="secondary-btn" id="completeBtn">Round complete</button>
+  <button class="secondary-btn" id="editPinsBtn">Edit pin position</button>
+  <button class="secondary-btn" id="exportBtn">Export CSV…</button>
+  <button class="danger-btn" id="deleteRoundBtn">Delete round</button>
+</div>
+
+<div class="screen" id="screen-newround">
+  <h2 class="round-header">New Round</h2>
+  <p class="section-label">Date</p>
+  <input type="date" class="text-input" id="roundDateInput" style="width:100%; text-align:left; font-size:16px; padding:10px;">
+  <p class="section-label">Notes (optional)</p>
+  <textarea class="text-input" id="roundNotesInput" rows="3" style="width:100%; font-size:15px; padding:10px; resize:none; overflow:hidden; min-height:64px; line-height:1.45;" placeholder="e.g. Saturday morning with Jim"></textarea>
+  <p class="section-label" style="margin-top:24px;">Pin Position</p>
+  <div class="single-pin-row" id="singlePinRow"></div>
+  <button class="save-btn" id="createRoundBtn">Start Round</button>
+</div>
+
+<div class="screen" id="screen-hole">
+  <div class="hole-header">
+    <h2 id="holeTitle"></h2>
+    <div class="pin-display">
+      <span id="parBadge" class="par-badge"></span>
+      Pin <span class="pin-num" id="holePinDisplay"></span>
+    </div>
+  </div>
+
+  <div class="field-group">
+    <div class="group-title">Scorecard</div>
+    <div class="field-row">
+      <span class="label">Strokes</span>
+      <div class="num-row cols-8" id="strokesRow"></div>
+    </div>
+    <div class="field-row" id="fairwayRow">
+      <span class="label">Off the tee</span>
+      <div class="chip-row" data-field="tee_result">
+        <button data-val="L">Left</button>
+        <button data-val="F">Fairway</button>
+        <button data-val="R">Right</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="field-group">
+    <div class="group-title">Green Complex</div>
+    <button class="sector-pick-btn" id="sectorPickBtn">Tap to pick sector reached
+      <span class="master-code" id="sectorMasterCode"></span>
+    </button>
+    <div class="field-row" style="margin-top: 4px;">
+      <span class="label">Strokes from sector <span class="hint">to hole-out</span></span>
+      <div class="num-row cols-4" id="strokesFromSectorRow"></div>
+    </div>
+  </div>
+
+  <div class="field-group">
+    <div class="group-title">Putting</div>
+    <div class="field-row inline">
+      <span class="label">Distance <span class="hint">ft</span></span>
+      <input type="number" class="num-input" inputmode="numeric" pattern="[0-9]*" id="firstPuttDist" placeholder="—">
+    </div>
+    <div class="field-row">
+      <span class="label">Slope</span>
+      <div class="chip-row" data-field="first_putt_slope">
+        <button data-val="up">Uphill</button>
+        <button data-val="flat">Flat</button>
+        <button data-val="down">Downhill</button>
+      </div>
+    </div>
+    <div class="field-row">
+      <span class="label">Result</span>
+      <div class="chip-row" data-field="first_putt_result">
+        <button data-val="below">Below</button>
+        <button data-val="hit">Straight</button>
+        <button data-val="above">Above</button>
+      </div>
+    </div>
+    <div class="field-row">
+      <span class="label">Putts <span class="hint">total</span></span>
+      <div class="num-row cols-5" id="puttsRow"></div>
+    </div>
+    <div class="field-row">
+      <span class="label">Pelz <span class="hint">distance × direction</span></span>
+      <div class="pelz-grid" id="pelzGrid"></div>
+    </div>
+  </div>
+
+  <button class="save-btn" id="saveHoleBtn">Save Hole</button>
+</div>
+
+<div class="modal-overlay" id="sectorModal">
+  <div class="modal-header">
+    <span class="title" id="sectorModalTitle">Pick sector</span>
+    <button class="close" id="sectorModalClose">Done</button>
+  </div>
+  <div class="modal-body">
+    <div class="sector-svg-wrap" id="sectorSvgWrap"></div>
+    <ul class="entry-list" id="entryList"></ul>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="holes_data.js"></script>
+<script src="app.js"></script>
+
+</body>
+</html>
