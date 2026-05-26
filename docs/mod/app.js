@@ -273,6 +273,27 @@ function renderRound() {
     const reachedAt = hd.score - hd.strokes_from_sector;
     if (desc.startsWith('Green,') && reachedAt <= parOf(h) - 2) girMade++;
   }
+  // Weighted average shot quality. Per club, average the qualities of all shots
+  // in that category; weights are D:14, F:4, H:9, I:6, S:3, W:6, C:5, B:2.
+  // Renormalized over categories that actually have data — empty categories drop out.
+  const SHOT_WEIGHTS = {D:14, F:4, H:9, I:6, S:3, W:6, C:5, B:2};
+  const sums = {}, counts = {};
+  for (const hd of Object.values(r.holes)) {
+    if (!hd.shots) continue;
+    for (const shot of hd.shots) {
+      if (!shot.club || !shot.quality) continue;
+      sums[shot.club] = (sums[shot.club] || 0) + shot.quality;
+      counts[shot.club] = (counts[shot.club] || 0) + 1;
+    }
+  }
+  let wAvgNum = 0, wAvgDen = 0;
+  for (const c of Object.keys(SHOT_WEIGHTS)) {
+    if (counts[c]) {
+      wAvgNum += SHOT_WEIGHTS[c] * (sums[c] / counts[c]);
+      wAvgDen += SHOT_WEIGHTS[c];
+    }
+  }
+  const avgQuality = wAvgDen ? (wAvgNum / wAvgDen) : null;
   document.getElementById('roundStats').innerHTML = `
     <div class="row"><span class="label">Total strokes</span><span class="val">${totalScore || '—'}</span></div>
     <div class="row"><span class="label">Total putts</span><span class="val">${putts || '—'}</span></div>
@@ -281,6 +302,7 @@ function renderRound() {
     <div class="row"><span class="label" style="padding-left:16px; color:var(--ink-muted);">Missed right</span><span class="val">${rightCount}</span></div>
     <div class="row"><span class="label">GIR</span><span class="val">${girMade}/${girAttempted || '—'}</span></div>
     <div class="row"><span class="label">Missed swings <span style="font-family:var(--mono); font-size:11px; color:var(--ink-dim);">(quality ≤ 5)</span></span><span class="val">${missedSwings}</span></div>
+    <div class="row"><span class="label">Avg shot quality</span><span class="val">${avgQuality === null ? '—' : avgQuality.toFixed(1)}</span></div>
   `;
   
   const completeBtn = document.getElementById('completeBtn');
