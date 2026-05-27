@@ -214,6 +214,18 @@ function renderRound() {
   document.getElementById('roundDate').textContent = fmtDate(r.date);
   const filled = Object.keys(r.holes).filter(h => r.holes[h].score).length;
   const totalScore = Object.values(r.holes).reduce((s, h) => s + (h.score || 0), 0);
+  // Cumulative par over holes with a recorded score
+  let parSoFar = 0;
+  for (let h = 1; h <= 18; h++) {
+    if (r.holes[h] && r.holes[h].score) parSoFar += parOf(h);
+  }
+  const parDiff = totalScore - parSoFar;
+  let parDiffStr = '';
+  if (totalScore > 0) {
+    if (parDiff === 0) parDiffStr = 'even';
+    else if (parDiff > 0) parDiffStr = '+' + parDiff;
+    else parDiffStr = parDiff;  // already has minus sign
+  }
   document.getElementById('roundMeta').textContent =
     `${filled}/18 holes recorded${totalScore ? ' · ' + totalScore + ' strokes' : ''}`;
   renderNotesSection(r);
@@ -295,7 +307,7 @@ function renderRound() {
   }
   const avgQuality = wAvgDen ? (wAvgNum / wAvgDen) : null;
   document.getElementById('roundStats').innerHTML = `
-    <div class="row"><span class="label">Total strokes</span><span class="val">${totalScore || '—'}</span></div>
+    <div class="row"><span class="label">Total strokes</span><span class="val">${totalScore || '—'}${parDiffStr ? ` <span class="par-diff${parDiff < 0 ? ' neg' : ''}">${parDiffStr}</span>` : ''}</span></div>
     <div class="row"><span class="label">Total putts</span><span class="val">${putts || '—'}</span></div>
     <div class="row"><span class="label">Fairways</span><span class="val">${fwCount}/${driveCount || '—'}</span></div>
     <div class="row"><span class="label" style="padding-left:16px; color:var(--ink-muted);">Missed left</span><span class="val">${leftCount}</span></div>
@@ -382,6 +394,17 @@ function renderHole() {
   document.getElementById('saveHoleBtn').onclick = () => {
     saveRounds(); toast('Saved'); renderRound(); showScreen('round');
   };
+
+  document.getElementById('clearHoleBtn').onclick = () => {
+    const r = getRound(currentRoundId);
+    const h = currentHole;
+    if (!confirm(`Clear all data for hole ${h}? This cannot be undone.`)) return;
+    r.holes[h] = {};
+    currentHoleData = r.holes[h];
+    saveRounds();
+    toast('Hole cleared');
+    renderHole();
+  };
   
   document.getElementById('addShotBtn').onclick = () => {
     currentHoleData.shots.push({club: null, quality: null});
@@ -457,11 +480,10 @@ function renderShots() {
   currentHoleData.shots.forEach((shot, idx) => {
     const block = document.createElement('div');
     block.className = 'shot-block';
-    const isExtra = idx >= defaultCount;
     block.innerHTML = `
       <div class="shot-title">
         <span>Shot ${idx + 1}</span>
-        ${isExtra ? '<button class="remove" data-idx="'+idx+'">Remove</button>' : ''}
+        <button class="remove" data-idx="${idx}">Remove</button>
       </div>
       <div class="sublabel">Club</div>
       <div class="chip-row club-chips" data-idx="${idx}"></div>
@@ -748,7 +770,7 @@ document.getElementById('completeBtn').onclick = () => {
 };
 
 document.getElementById('deleteRoundBtn').onclick = () => {
-  if (!confirm('Delete this round? This cannot be undone.')) return;
+  if (!confirm('Delete this entire round? All hole data will be permanently lost. This cannot be undone.')) return;
   rounds = rounds.filter(r => r.id !== currentRoundId);
   saveRounds(); renderRoundsList(); showScreen('rounds'); toast('Round deleted');
 };
