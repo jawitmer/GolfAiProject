@@ -259,8 +259,14 @@ function renderRound() {
     const reachedAt = hd.score - hd.strokes_from_sector;
     if (desc.startsWith('Green,') && reachedAt <= parOf(h) - 2) girMade++;
   }
+  // Par-diff vs cumulative par over scored holes (red = under par, Oberlin convention)
+  const scoredPar = Object.entries(r.holes)
+    .reduce((s, [h, hd]) => s + (hd.score ? parOf(+h) : 0), 0);
+  const diff = totalScore - scoredPar;
+  const diffStr = !totalScore ? '' : diff === 0 ? 'even' : diff > 0 ? `+${diff}` : `\u2212${-diff}`;
+  const diffColor = diff < 0 ? 'var(--accent)' : 'var(--ink)';
   document.getElementById('roundStats').innerHTML = `
-    <div class="row"><span class="label">Total strokes</span><span class="val">${totalScore || '—'}</span></div>
+    <div class="row"><span class="label">Total strokes</span><span class="val">${totalScore || '—'}${diffStr ? ` <span style="color:${diffColor}; font-weight:600;">${diffStr}</span>` : ''}</span></div>
     <div class="row"><span class="label">Total putts</span><span class="val">${putts || '—'}</span></div>
     <div class="row"><span class="label">Fairways</span><span class="val">${fwCount}/${driveCount || '—'}</span></div>
     <div class="row"><span class="label" style="padding-left:16px; color:var(--ink-muted);">Missed left</span><span class="val">${leftCount}</span></div>
