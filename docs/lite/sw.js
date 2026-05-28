@@ -1,5 +1,5 @@
 // AQlite service worker — separate cache namespace from AQ and AQmod
-const CACHE_NAME = 'aqlite-v2';
+const CACHE_NAME = 'aqlite-v3';
 const ASSETS = ['./', './index.html', './app.js', './holes_data.js', './manifest.webmanifest'];
 
 self.addEventListener('install', e => {
