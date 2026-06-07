@@ -411,7 +411,7 @@ function renderHole() {
   document.getElementById('saveHoleBtn').onclick = () => {
     saveRounds();
     const probs = holeMissing(currentHoleData);
-    toast(probs.length ? `Saved — missing: ${probs.join(', ')}` : 'Saved');
+    toast(probs.length ? `Saved — missing: ${probs.join(', ')}` : 'Saved', probs.length ? 4000 : 1500);
     renderRound(); showScreen('round');
   };
 
@@ -791,12 +791,12 @@ document.getElementById('newRoundBtn').onclick = () => {
 
 // ── Toast ──
 let toastTimer = null;
-function toast(msg) {
+function toast(msg, ms = 1500) {
   const t = document.getElementById('toast');
   t.textContent = msg;
   t.classList.add('show');
   clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => t.classList.remove('show'), 1500);
+  toastTimer = setTimeout(() => t.classList.remove('show'), ms);
 }
 
 renderRoundsList();
