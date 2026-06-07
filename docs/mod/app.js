@@ -62,6 +62,23 @@ function holeStatus(h) {
   if (h.sector || (h.shots && h.shots.length) || h.first_putt_slope) return 'partial';
   return 'empty';
 }
+// Single source of truth for per-hole missing-field checks. Used by both the
+// round-complete validation and the per-hole save notification. A hole with
+// no score is treated as not-yet-played and reports nothing missing.
+function holeMissing(hd) {
+  if (!hd || !hd.score) return [];
+  const probs = [];
+  if (!hd.sector) probs.push('sector');
+  if (hd.strokes_from_sector === undefined || hd.strokes_from_sector === null) probs.push('strokes from sector');
+  // First-putt fields only matter when there's at least one putt
+  if (hd.putts && hd.putts > 0) {
+    if (!hd.first_putt_dist) probs.push('first putt distance');
+    if (!hd.first_putt_slope) probs.push('first putt slope');
+    if (!hd.first_putt_result) probs.push('first putt result');
+    if (!hd.pelz) probs.push('Pelz');
+  }
+  return probs;
+}
 
 // ── Screens ──
 function showScreen(name) {
@@ -392,7 +409,10 @@ function renderHole() {
   buildPelzGrid();
   
   document.getElementById('saveHoleBtn').onclick = () => {
-    saveRounds(); toast('Saved'); renderRound(); showScreen('round');
+    saveRounds();
+    const probs = holeMissing(currentHoleData);
+    toast(probs.length ? `Saved — missing: ${probs.join(', ')}` : 'Saved');
+    renderRound(); showScreen('round');
   };
 
   document.getElementById('clearHoleBtn').onclick = () => {
@@ -745,18 +765,7 @@ document.getElementById('completeBtn').onclick = () => {
   } else {
     const missing = [];
     for (let h = 1; h <= 18; h++) {
-      const hd = r.holes[h];
-      if (!hd || !hd.score) continue;
-      const probs = [];
-      if (!hd.sector) probs.push('sector');
-      if (hd.strokes_from_sector === undefined || hd.strokes_from_sector === null) probs.push('strokes from sector');
-      // First-putt fields only matter when there's at least one putt
-      if (hd.putts && hd.putts > 0) {
-        if (!hd.first_putt_dist) probs.push('first putt distance');
-        if (!hd.first_putt_slope) probs.push('first putt slope');
-        if (!hd.first_putt_result) probs.push('first putt result');
-        if (!hd.pelz) probs.push('Pelz');
-      }
+      const probs = holeMissing(r.holes[h]);
       if (probs.length) missing.push(`H${h}: ${probs.join(', ')}`);
     }
     if (missing.length) {
