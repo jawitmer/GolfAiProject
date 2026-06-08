@@ -63,11 +63,21 @@ function holeStatus(h) {
   return 'empty';
 }
 // Single source of truth for per-hole missing-field checks. Used by both the
-// round-complete validation and the per-hole save notification. A hole with
-// no score is treated as not-yet-played and reports nothing missing.
+// round-complete validation and the per-hole save notification. A hole with no
+// real data entered is treated as not-yet-played and reports nothing missing;
+// once a hole has any data, a missing score is flagged like any other field.
 function holeMissing(hd) {
-  if (!hd || !hd.score) return [];
+  if (!hd) return [];
+  // "Touched" = any user-entered data. Note: par/pin are display-only and not
+  // stored on the hole, and an opened-but-empty hole is just {shots: []}, so an
+  // empty shots array does not count as data (keeps 9-hole rounds quiet).
+  const touched = hd.score || hd.sector || hd.tee_result || hd.putts ||
+    hd.strokes_from_sector !== undefined ||
+    hd.first_putt_dist || hd.first_putt_slope || hd.first_putt_result || hd.pelz ||
+    (hd.shots && hd.shots.length > 0);
+  if (!touched) return [];
   const probs = [];
+  if (!hd.score) probs.push('score');
   if (!hd.sector) probs.push('sector');
   if (hd.strokes_from_sector === undefined || hd.strokes_from_sector === null) probs.push('strokes from sector');
   // First-putt fields only matter when there's at least one putt
