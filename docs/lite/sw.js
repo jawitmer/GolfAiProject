@@ -1,5 +1,8 @@
-// AQlite service worker — separate cache namespace from AQ and AQmod
-const CACHE_NAME = 'aqlite-v3';
+// AQlite service worker — own cache namespace ('aqlite-')
+// CacheStorage is ORIGIN-scoped and shared with the other apps on
+// jawitmer.github.io, so activate() must only delete THIS app's stale caches.
+const CACHE_PREFIX = 'aqlite-';
+const CACHE_NAME = 'aqlite-v4';
 const ASSETS = ['./', './index.html', './app.js', './holes_data.js', './manifest.webmanifest'];
 
 self.addEventListener('install', e => {
@@ -9,7 +12,8 @@ self.addEventListener('install', e => {
 
 self.addEventListener('activate', e => {
   e.waitUntil(caches.keys().then(keys =>
-    Promise.all(keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k)))
+    Promise.all(keys.filter(k => k.startsWith(CACHE_PREFIX) && k !== CACHE_NAME)
+                    .map(k => caches.delete(k)))
   ));
   self.clients.claim();
 });
