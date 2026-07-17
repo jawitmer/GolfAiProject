@@ -1,5 +1,8 @@
-// AQmod service worker — separate cache name from AQ
-const CACHE_NAME = 'aqmod-v27';
+// AQmod service worker — own cache namespace ('aqmod-')
+// CacheStorage is ORIGIN-scoped and shared with the other apps on
+// jawitmer.github.io, so activate() must only delete THIS app's stale caches.
+const CACHE_PREFIX = 'aqmod-';
+const CACHE_NAME = 'aqmod-v28';
 const ASSETS = ['./', './index.html', './app.js', './holes_data.js', './manifest.webmanifest'];
 
 self.addEventListener('install', e => {
@@ -9,7 +12,8 @@ self.addEventListener('install', e => {
 
 self.addEventListener('activate', e => {
   e.waitUntil(caches.keys().then(keys =>
-    Promise.all(keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k)))
+    Promise.all(keys.filter(k => k.startsWith(CACHE_PREFIX) && k !== CACHE_NAME)
+                    .map(k => caches.delete(k)))
   ));
   self.clients.claim();
 });
