@@ -2,7 +2,7 @@
 // CacheStorage is ORIGIN-scoped and shared with the other apps on
 // jawitmer.github.io, so activate() must only delete THIS app's stale caches.
 const CACHE_PREFIX = 'aqmod-';
-const CACHE_NAME = 'aqmod-v28';
+const CACHE_NAME = 'aqmod-v29';
 const ASSETS = ['./', './index.html', './app.js', './holes_data.js', './manifest.webmanifest'];
 
 self.addEventListener('install', e => {
