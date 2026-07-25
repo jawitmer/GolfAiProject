@@ -110,7 +110,7 @@ for (i in seq_len(nrow(grid))) {
       prior   = make_priors(grid$sd_scale[i], grid$int_sd[i]),
       chains  = 4, iter = 3000, warmup = 1000,
       cores   = 4, seed = 1,            # same seed as v0.3: differences are the priors
-      backend = "cmdstanr",
+      backend = "rstan",
       control = list(adapt_delta = 0.95, max_treedepth = 12)
     )
   }

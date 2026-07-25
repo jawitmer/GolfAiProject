@@ -140,7 +140,7 @@ fit <- brm(
   prior   = priors,
   chains  = 4, iter = 3000, warmup = 1000,
   cores   = 4, seed = 1,
-  backend = "cmdstanr",
+  backend = "rstan",
   control = list(adapt_delta = 0.95, max_treedepth = 12)
 )
 
