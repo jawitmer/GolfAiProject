@@ -221,7 +221,7 @@ function editNotes(r) {
   const actions = document.createElement('div');
   actions.className = 'edit-actions';
   const done = document.createElement('button');
-  done.textContent = 'Done';
+  done.textContent = 'Close';
   done.className = 'done-btn';
   done.onclick = () => {
     r.notes = ta.value.trim();
