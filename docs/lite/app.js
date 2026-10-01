@@ -5,6 +5,7 @@
 //  GIR at display time from sector + strokes_from_sector + par.)
 
 const STORAGE_KEY = 'aqlite_rounds_v1';
+const DRAFT_KEY = STORAGE_KEY + '_draft_notes';
 
 // Par per hole
 const PAR3_HOLES = new Set([5, 8, 13, 16]);
@@ -117,8 +118,8 @@ function renderNewRound(existingRound) {
   const isEdit = !!existingRound;
   document.getElementById('roundDateInput').value = isEdit ? existingRound.date : new Date().toISOString().slice(0,10);
   const notesInput = document.getElementById('roundNotesInput');
-  notesInput.value = isEdit ? (existingRound.notes || '') : '';
-  notesInput.oninput = () => autoGrow(notesInput);
+  notesInput.value = isEdit ? (existingRound.notes || '') : (localStorage.getItem(DRAFT_KEY) || '');
+  notesInput.oninput = () => { autoGrow(notesInput); if (!isEdit) localStorage.setItem(DRAFT_KEY, notesInput.value); };
   requestAnimationFrame(() => autoGrow(notesInput));
   document.getElementById('createRoundBtn').textContent = isEdit ? 'Save Pin' : 'Start Round';
   
@@ -143,6 +144,7 @@ function renderNewRound(existingRound) {
     const pins = new Array(18).fill(selectedPin);
     if (isEdit) {
       existingRound.pins = pins;
+      existingRound.notes = document.getElementById('roundNotesInput').value.trim();
       saveRounds(); renderRound(); showScreen('round'); toast('Pin updated');
     } else {
       const id = uid();
@@ -154,6 +156,7 @@ function renderNewRound(existingRound) {
       };
       rounds.push(newR);
       saveRounds();
+      localStorage.removeItem(DRAFT_KEY);
       currentRoundId = id;
       renderRound();
       showScreen('round');
@@ -180,13 +183,10 @@ function editNotes(r) {
   const ta = document.createElement('textarea');
   ta.value = r.notes || '';
   ta.placeholder = 'e.g. Saturday morning with Jim';
-  ta.oninput = () => autoGrow(ta);
+  ta.oninput = () => { autoGrow(ta); r.notes = ta.value.trim(); saveRounds(); };
   sec.appendChild(ta);
   const actions = document.createElement('div');
   actions.className = 'edit-actions';
-  const cancel = document.createElement('button');
-  cancel.textContent = 'Cancel';
-  cancel.onclick = () => renderNotesSection(r);
   const done = document.createElement('button');
   done.textContent = 'Done';
   done.className = 'done-btn';
@@ -195,7 +195,6 @@ function editNotes(r) {
     saveRounds();
     renderNotesSection(r);
   };
-  actions.appendChild(cancel);
   actions.appendChild(done);
   sec.appendChild(actions);
   requestAnimationFrame(() => { autoGrow(ta); ta.focus(); });
