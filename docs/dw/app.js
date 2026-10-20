@@ -1,4 +1,4 @@
-// DWmod v0.1 — Desert Willow data entry PWA (Firecliff, Mountain View) — separate from AQmod
+// DWmod v0.2 —Desert Willow data entry PWA (Firecliff, Mountain View) — separate from AQmod
 // Round: {id, date, notes, course, tee, holes}
 // Schema per hole: score, putts, tee_result(L/F/R), gir(1/0), shots[{club,quality}],
 //   first_putt_dist, first_putt_slope, first_putt_result, pelz(1-9)
@@ -717,9 +717,3 @@ renderRoundsList();
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('sw.js').catch(()=>{});
 }
-
-// v35 diagnostic: tap top-bar title to show viewport state (temporary)
-document.getElementById('topTitle').onclick = () => {
-  const v = window.visualViewport || {};
-  alert(`win ${innerWidth}×${innerHeight}\nvv ${Math.round(v.width)}×${Math.round(v.height)}\noffset ${Math.round(v.offsetTop)}  scale ${v.scale}\nscrollY ${Math.round(scrollY)}\ndoc ${document.documentElement.clientHeight}`);
-};

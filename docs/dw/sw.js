@@ -2,7 +2,7 @@
 // CacheStorage is ORIGIN-scoped and shared with the other apps on
 // jawitmer.github.io, so activate() must only delete THIS app's stale caches.
 const CACHE_PREFIX = 'dwmod-';
-const CACHE_NAME = 'dwmod-v0.1';
+const CACHE_NAME = 'dwmod-v0.2';
 const ASSETS = ['./', './index.html', './app.js', './manifest.webmanifest'];
 
 self.addEventListener('install', e => {
