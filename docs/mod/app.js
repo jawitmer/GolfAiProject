@@ -117,6 +117,7 @@ function showScreen(name) {
     document.getElementById('topCrumb').textContent = '';
   }
   window.scrollTo(0, 0);
+  repairViewport();
 }
 
 // ── Rounds list ──
@@ -818,3 +819,13 @@ document.getElementById('topTitle').onclick = () => {
   const v = window.visualViewport || {};
   alert(`win ${innerWidth}×${innerHeight}\nvv ${Math.round(v.width)}×${Math.round(v.height)}\noffset ${Math.round(v.offsetTop)}  scale ${v.scale}\nscrollY ${Math.round(scrollY)}\ndoc ${document.documentElement.clientHeight}`);
 };
+
+// v36: repair viewport iOS can leave with height <= 0 after the app switcher (experimental)
+function repairViewport() {
+  const v = window.visualViewport, meta = document.querySelector('meta[name=viewport]');
+  if (!v || !meta || v.height > 0) return;
+  const c = meta.content;
+  meta.content = c + ', shrink-to-fit=no';
+  requestAnimationFrame(() => { meta.content = c; });
+}
+document.addEventListener('visibilitychange', () => { if (!document.hidden) setTimeout(repairViewport, 500); });
